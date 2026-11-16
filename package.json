@@ -1,0 +1,23 @@
+{
+  "name": "amigo-invisible-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Web para organizar la cena de Navidad y el amigo invisible de Khambu",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource-variable/nunito": "^5.3.0",
+    "lucide-react": "^1.73.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router": "^8.5.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.3.0",
+    "vite": "^8.3.8"
+  }
+}

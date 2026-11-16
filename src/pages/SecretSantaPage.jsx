@@ -1,7 +1,9 @@
 import { Gift, Lock, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
+import BudgetSurvey from '../components/BudgetSurvey.jsx';
 import PageHeader from '../components/PageHeader.jsx';
+import SlotReveal from '../components/SlotReveal.jsx';
 import { ErrorCard, Loading } from '../components/States.jsx';
 import { formatTimestamp } from '../format.js';
 import { useApiData } from '../useApiData.js';
@@ -16,6 +18,7 @@ export default function SecretSantaPage() {
     content = (
       <>
         <DrawStatus data={data} />
+        <BudgetSurvey />
         <section className="card stack">
           <h2 className="card__title">
             <Users size={22} aria-hidden="true" /> {data.drawn ? 'Participan' : 'Apuntados'} ({data.participants.length})
@@ -50,7 +53,9 @@ export default function SecretSantaPage() {
 }
 
 function DrawStatus({ data }) {
-  if (data.drawn && data.inDraw) return <RevealCard receiver={data.receiver} />;
+  if (data.drawn && data.inDraw) {
+    return <RevealArea receiver={data.receiver} names={data.participants} />;
+  }
 
   if (data.drawn) {
     return (
@@ -85,31 +90,20 @@ function DrawStatus({ data }) {
   );
 }
 
-function RevealCard({ receiver }) {
-  const [revealed, setRevealed] = useState(false);
+function RevealArea({ receiver, names }) {
+  const [hidden, setHidden] = useState(false);
 
-  return (
-    <button
-      type="button"
-      className={`reveal${revealed ? ' reveal--open' : ''}`}
-      onClick={() => setRevealed((current) => !current)}
-      aria-live="polite"
-    >
-      {revealed ? (
-        <>
-          <span className="reveal__eyebrow">Te ha tocado regalar a</span>
-          <span className="reveal__name">{receiver.name}</span>
-          <span className="reveal__hint">Toca para ocultarlo</span>
-        </>
-      ) : (
-        <>
-          <span className="reveal__gift" aria-hidden="true">
-            <Gift size={56} />
-          </span>
-          <span className="reveal__title">Toca para descubrir</span>
-          <span className="reveal__hint">a quién le haces el regalo</span>
-        </>
-      )}
-    </button>
-  );
+  if (hidden) {
+    return (
+      <button type="button" className="reveal" onClick={() => setHidden(false)} aria-live="polite">
+        <span className="reveal__gift" aria-hidden="true">
+          <Gift size={56} />
+        </span>
+        <span className="reveal__title">Volver a verlo</span>
+        <span className="reveal__hint">a quién le haces el regalo</span>
+      </button>
+    );
+  }
+
+  return <SlotReveal names={names} receiver={receiver} onHide={() => setHidden(true)} />;
 }

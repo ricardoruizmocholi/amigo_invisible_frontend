@@ -2,6 +2,7 @@ import { CalendarClock, ChevronRight, Gift, MapPin, MapPinned, ShieldCheck } fro
 import { Link } from 'react-router';
 import { useAuth } from '../auth.jsx';
 import PageHeader from '../components/PageHeader.jsx';
+import PlaceMap from '../components/PlaceMap.jsx';
 import { ErrorCard, Loading } from '../components/States.jsx';
 import { firstName, formatDay, formatTime, plural } from '../format.js';
 import { summarize } from '../proposals.js';
@@ -45,6 +46,8 @@ function MeetupSummary({ data, error, loading, reload }) {
   }
   if (!data) return <ErrorCard error={error} onRetry={reload} />;
 
+  const chosenPlace = data.places.find((proposal) => proposal.chosen) ?? null;
+
   return (
     <section className="card card--mint stack">
       <h2 className="card__title">
@@ -64,6 +67,7 @@ function MeetupSummary({ data, error, loading, reload }) {
         describe={(proposal) => `${formatDay(proposal.startsAt)} · ${formatTime(proposal.startsAt)}`}
         empty="Aún no hay fechas propuestas"
       />
+      {chosenPlace && <PlaceMap place={chosenPlace} compact />}
       <Link to="/quedada" className="btn btn--primary btn--block">
         Proponer y votar
       </Link>

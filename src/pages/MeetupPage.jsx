@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useConfirm } from '../confirm.jsx';
 import PageHeader from '../components/PageHeader.jsx';
+import PlaceMap from '../components/PlaceMap.jsx';
 import { EmptyState, ErrorCard, Loading } from '../components/States.jsx';
 import { formatDay, formatTime, today } from '../format.js';
 import { summarize } from '../proposals.js';
@@ -142,12 +143,15 @@ export default function MeetupPage() {
       </div>
 
       {chosen && (
-        <div className="banner">
-          <CircleCheck size={26} aria-hidden="true" />
-          <p>
-            <strong>{settings.chosenBanner}</strong>
-            {kind === 'place' ? chosen.title : `${formatDay(chosen.startsAt)} a las ${formatTime(chosen.startsAt)}`}
-          </p>
+        <div className="stack">
+          <div className="banner">
+            <CircleCheck size={26} aria-hidden="true" />
+            <p>
+              <strong>{settings.chosenBanner}</strong>
+              {kind === 'place' ? chosen.title : `${formatDay(chosen.startsAt)} a las ${formatTime(chosen.startsAt)}`}
+            </p>
+          </div>
+          {kind === 'place' && <PlaceMap place={chosen} />}
         </div>
       )}
 
@@ -187,6 +191,11 @@ function ProposalCard({ proposal, totalPeople, isLeader, chosenTag, onVote, onDe
               <Clock size={16} aria-hidden="true" /> {formatTime(proposal.startsAt)} h
             </p>
           )}
+          {proposal.kind === 'place' && proposal.address && (
+            <p className="proposal__address">
+              <MapPin size={15} aria-hidden="true" /> {proposal.address}
+            </p>
+          )}
           {proposal.details && (
             <p className="proposal__details">
               <Linkified text={proposal.details} />
@@ -204,6 +213,8 @@ function ProposalCard({ proposal, totalPeople, isLeader, chosenTag, onVote, onDe
           <span>{proposal.votes}</span>
         </button>
       </div>
+
+      {proposal.kind === 'place' && !proposal.chosen && <PlaceMap place={proposal} compact />}
 
       <div className="meter" role="img" aria-label={`${proposal.votes} de ${totalPeople} personas`}>
         <span style={{ width: `${share}%` }} />
@@ -248,6 +259,7 @@ function ProposalCard({ proposal, totalPeople, isLeader, chosenTag, onVote, onDe
 function ProposalForm({ kind, onCancel, onCreated }) {
   const showToast = useToast();
   const [title, setTitle] = useState('');
+  const [address, setAddress] = useState('');
   const [day, setDay] = useState('');
   const [time, setTime] = useState('21:00');
   const [details, setDetails] = useState('');
@@ -259,7 +271,10 @@ function ProposalForm({ kind, onCancel, onCreated }) {
     setSaving(true);
     setError('');
     try {
-      const body = kind === 'place' ? { kind, title, details } : { kind, startsAt: `${day}T${time}`, details };
+      const body =
+        kind === 'place'
+          ? { kind, title, address: address || null, details }
+          : { kind, startsAt: `${day}T${time}`, details };
       await api('/proposals', { method: 'POST', body });
       showToast('¡Propuesta añadida! Ya cuenta con tu voto.');
       onCreated();
@@ -272,19 +287,33 @@ function ProposalForm({ kind, onCancel, onCreated }) {
   return (
     <form className="card stack" onSubmit={handleSubmit}>
       {kind === 'place' ? (
-        <label className="field">
-          <span className="field__label">¿Qué sitio propones?</span>
-          <input
-            className="input"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            minLength={2}
-            maxLength={80}
-            placeholder="Nombre del restaurante o bar"
-            required
-            autoFocus
-          />
-        </label>
+        <>
+          <label className="field">
+            <span className="field__label">¿Qué sitio propones?</span>
+            <input
+              className="input"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              minLength={2}
+              maxLength={80}
+              placeholder="Nombre del restaurante o bar"
+              required
+              autoFocus
+            />
+          </label>
+          <label className="field">
+            <span className="field__label">
+              Dirección o zona <span className="field__optional">(opcional)</span>
+            </span>
+            <input
+              className="input"
+              value={address}
+              onChange={(event) => setAddress(event.target.value)}
+              maxLength={120}
+              placeholder="Calle, barrio o ciudad (mejor para el mapa)"
+            />
+          </label>
+        </>
       ) : (
         <div className="field-row">
           <label className="field">
@@ -321,7 +350,7 @@ function ProposalForm({ kind, onCancel, onCreated }) {
           maxLength={300}
           value={details}
           onChange={(event) => setDetails(event.target.value)}
-          placeholder={kind === 'place' ? 'Dirección, enlace a la carta, precio por persona…' : '¿Algo que haya que saber?'}
+          placeholder={kind === 'place' ? 'Enlace a la carta, precio por persona…' : '¿Algo que haya que saber?'}
         />
       </label>
 
